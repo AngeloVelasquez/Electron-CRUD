@@ -1,0 +1,20 @@
+{
+  "name": "electron-crud",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "electron": "^25.3.0",
+    "electron-reload": "^2.0.0-alpha.1",
+    "mssql": "^9.1.1",
+    "node": "^20.4.0",
+    "remote": "^0.0.7",
+    "update-electron-app": "^2.0.1"
+  }
+}
