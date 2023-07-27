@@ -1,23 +1,27 @@
 const { ipcRenderer } = require("electron")
+const search = require("./search")
 
-const formProduct = document.getElementById("formProduct");
+// Elementos del formulario
 
+const formProduct = document.getElementById("formProduct")
 const productName = document.getElementById("name")
-const productPrice = document.getElementById("price")
-const productDesc = document.getElementById("description")
+const productQuantity = document.getElementById("quantity")
+const productGender = document.getElementById("gender")
 const productsList = document.getElementById("products")
 
 let products = []
 let editingStatus = false
 let editProductId = ""
 
+// Formulario Producto
+
 formProduct.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const newProduct = {
         name: productName.value,
-        price: productPrice.value,
-        description: productDesc.value
+        quantity: productQuantity.value,
+        gender: productGender.value
     }
 
     if (!editingStatus) {
@@ -57,8 +61,8 @@ async function deleteProduct(id) {
 async function editProduct(id) {
     const product = await ipcRenderer.invoke("editProduct", id)
     productName.value = product.name
-    productPrice.value = product.price
-    productDesc.value = product.description
+    productQuantity.value = product.quantity
+    productGender.value = product.gender
 
     editingStatus = true
     editProductId = product.id
@@ -70,8 +74,8 @@ function renderProducts(products) {
         productsList.innerHTML += `
             <div class="card card-body my-2 animate__animated animate__backInLeft">
                 <h4>${product.name}</h4>
-                <p>${product.description}</p>
-                <h5>${product.price}</h5>
+                <p>${product.gender}</p>
+                <h4>${product.quantity} gr</h4>
 
                 <!-- Acciones para editar y eliminar -->
 
@@ -102,4 +106,10 @@ async function init() {
     await getAllProducts()
 }
 
-init()
+// Inicializar el buscador
+searchInput.addEventListener("keyup", () => {
+    const searchTerm = searchInput.value;
+    search.performSearch(products, searchTerm);
+});
+
+window.addEventListener('DOMContentLoaded', init)

@@ -1,28 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Electron Mysql</title>
+    <title>Touch Inventario</title>
     <link rel="stylesheet" href="./bootstrap.min.css">
     <link rel="stylesheet" href="./app.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 </head>
+
 <body>
+    <nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="./index.html">Touch</a>
+            <div class="collapse navbar-collapse" id="navbarColor01">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="./sections/indexH.html">Hombres</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./sections/indexM.html">Mujeres</a>
+                    </li>
+                </ul>
+                <form class="d-flex" id="formSearch">
+                    <input class="form-control me-sm-2" id="searchInput" type="search" placeholder="Buscar...">
+                    <button class="btn btn-secondary my-2 my-sm-0" id="searchButton" type="submit">Buscar</button>
+                </form>
+            </div>
+        </div>
+    </nav>
     <main class="container-fluid">
         <div class="row">
             <div class="col-md-6 my-auto">
                 <form id="formProduct" class="card card-body" style="margin-top: 15px;">
                     <div class="form-group">
-                        <input type="text" id="name" placeholder="Producto" class="form-control"
-                        autofocus>
+                        <input type="text" id="name" placeholder="Producto" class="form-control" autofocus>
                     </div>
-                    <div class="form-group" style="margin-top: 15px;">
-                        <input type="number" id="price" placeholder="Precio" class="form-control" step="any"
-                        autofocus>
+                    <div class="form-group" style="margin-top: 15px; margin-bottom: 0px;">
+                        <input type="number" id="quantity" placeholder="Cantidad" class="form-control" step="any"
+                            autofocus>
                     </div>
-                    <div class="form-group" style="margin-top: 15px; margin-bottom: 15px;">
-                        <textarea id="description" rows="3" placeholder="Descripcion" class="form-control"></textarea>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label class="form-label mt-4">
+                            <h5>Genero</h5>
+                        </label>
+                        <select class="form-select" id="gender">
+                            <option>Hombre</option>
+                            <option>Mujer</option>
+                        </select>
                     </div>
                     <button class="btn btn-primary">Guardar</button>
                 </form>
@@ -35,5 +61,7 @@
     </main>
 
     <script src="./main.js"></script>
+    <script src="./search.js"></script>
 </body>
+
 </html>

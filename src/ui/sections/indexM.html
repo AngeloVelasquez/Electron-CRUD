@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Touch Inventario</title>
+    <link rel="stylesheet" href="../bootstrap.min.css">
+    <link rel="stylesheet" href="../app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="../index.html">Touch</a>
+            <div class="collapse navbar-collapse" id="navbarColor01">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="./indexH.html">Hombres</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./indexM.html">Mujeres</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="search-container" style="padding: 50px; margin-left: 100px; margin-right: 100px;">
+        <form class="d-flex" id="formSearch">
+            <input class="form-control me-sm-2" id="searchInput" type="search" placeholder="Buscar...">
+            <button class="btn btn-secondary my-2 my-sm-0" id="searchButton" type="submit">Buscar</button>
+        </form>
+    </div>
+    <div class="col-md-6">
+        <div id="products"></div>
+    </div>
+</body>
+
+<script src="../main.js"></script>
+<script src="../search.js"></script>
+
+</html>

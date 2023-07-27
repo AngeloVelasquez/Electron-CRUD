@@ -1,17 +1,18 @@
 const { BrowserWindow, ipcMain, Notification } = require("electron")
 const { getConnection } = require("./database")
+const path = require("path")
 
 async function createNewProduct(product) {
     try {
         const pool = await getConnection()
         const request = pool.request()
 
-        productPrice = parseFloat(product.price)
+        product.quantity = parseFloat(product.quantity)
 
-        const sql = "INSERT INTO product (name, price, description) OUTPUT INSERTED.* VALUES (@name, @price, @description)"
+        const sql = "INSERT INTO product (name, quantity, gender) OUTPUT INSERTED.* VALUES (@name, @quantity, @gender)"
         request.input("name", product.name)
-        request.input("price", productPrice)
-        request.input("description", product.description || "")
+        request.input("quantity", product.quantity)
+        request.input("gender", product.gender)
 
         const result = await request.query(sql)
         const instertedProduct = result.recordset[0]
@@ -72,11 +73,11 @@ async function updateProductById(newProduct, id) {
         const pool = await getConnection();
         const request = pool.request();
 
-        const sql = "UPDATE product SET name = @name, description = @description, price = @price WHERE id = @id";
+        const sql = "UPDATE product SET name = @name, gender = @gender, quantity = @quantity WHERE id = @id";
         request.input("id", id); // Utilizamos el ID recibido como parámetro, no newProduct.id
         request.input("name", newProduct.name);
-        request.input("description", newProduct.description);
-        request.input("price", newProduct.price);
+        request.input("gender", newProduct.gender);
+        request.input("quantity", newProduct.quantity);
 
         // Ejecutamos la actualización
         await request.query(sql);
@@ -96,6 +97,8 @@ function createWindow() {
     window = new BrowserWindow({
         width: 800,
         height: 600,
+        autoHideMenuBar: true,
+        icon: path.join(__dirname, "icons", "icono.ico"),
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
@@ -139,8 +142,14 @@ ipcMain.handle("updateProductById", async (event, newProduct, id) => {
         throw error;
     }
 });
-;
 
+ipcMain.handle('perform-search', (event, searchTerm) => {
+    // Aquí colocas tu lógica de búsqueda...
+    // Supongamos que los resultados de búsqueda están en un arreglo llamado "searchResults"
+    const searchResults = [];
+
+    return searchResults;
+});
 
 module.exports = {
     createWindow
