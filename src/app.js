@@ -1,4 +1,4 @@
-const { BrowserWindow, ipcMain, Notification } = require("electron")
+const { BrowserWindow, ipcMain, Notification, app } = require("electron")
 const { getConnection } = require("./database")
 const path = require("path")
 
@@ -32,6 +32,18 @@ async function createNewProduct(product) {
 async function getAllProducts() {
     const conn = await getConnection()
     const results = await conn.query("SELECT * FROM product ORDER BY id DESC")
+    return results.recordset
+}
+
+async function getAllProductsOrderH() {
+    const conn = await getConnection()
+    const results = await conn.query("SELECT * FROM product WHERE gender = 'Hombre' ORDER BY name ASC")
+    return results.recordset
+}
+
+async function getAllProductsOrderM() {
+    const conn = await getConnection()
+    const results = await conn.query("SELECT * FROM product WHERE gender = 'Mujer' ORDER BY name ASC")
     return results.recordset
 }
 
@@ -92,13 +104,13 @@ async function updateProductById(newProduct, id) {
 }
 
 let window
+let sellProduct
 
 function createWindow() {
     window = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 1100,
+        height: 700,
         autoHideMenuBar: true,
-        icon: path.join(__dirname, "icons", "icono.ico"),
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
@@ -106,6 +118,45 @@ function createWindow() {
         }
     })
     window.loadFile("src/ui/index.html")
+    window.on("closed", () => {
+        app.quit()
+    })
+}
+
+function sellProductWindow() {
+    sellProduct = new BrowserWindow({
+        width: 600,
+        height: 480,
+        autoHideMenuBar: true,
+        title: "Cantidad a retirar",
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            enableRemoteModule: true
+        }
+    });
+    sellProduct.loadFile("src/ui/sections/sellProduct.html")
+    sellProduct.on("closed", () => {
+        sellProduct = null;
+    });
+}
+
+function enterProductWindow() {
+    sellProduct = new BrowserWindow({
+        width: 600,
+        height: 480,
+        autoHideMenuBar: true,
+        title: "Cantidad a Ingresar",
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            enableRemoteModule: true
+        }
+    });
+    sellProduct.loadFile("src/ui/sections/enterProduct.html")
+    sellProduct.on("closed", () => {
+        sellProduct = null;
+    });
 }
 
 ipcMain.handle("callCreateNewProduct", async (event, newProduct) => {
@@ -143,6 +194,22 @@ ipcMain.handle("updateProductById", async (event, newProduct, id) => {
     }
 });
 
+ipcMain.handle("getAllProductsOrderH", async (e) => {
+    return await getAllProductsOrderH();
+});
+
+ipcMain.handle("getAllProductsOrderM", async (e) => {
+    return await getAllProductsOrderM();
+})
+
+ipcMain.handle("sellProductWindow", async (e) => {
+    return await sellProductWindow()
+})
+
+ipcMain.handle("enterProductWindow", async (e) => {
+    return await enterProductWindow()
+})
+
 ipcMain.handle('perform-search', (event, searchTerm) => {
     // Aquí colocas tu lógica de búsqueda...
     // Supongamos que los resultados de búsqueda están en un arreglo llamado "searchResults"
@@ -152,5 +219,6 @@ ipcMain.handle('perform-search', (event, searchTerm) => {
 });
 
 module.exports = {
-    createWindow
+    createWindow,
+    sellProductWindow
 }
