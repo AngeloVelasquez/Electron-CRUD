@@ -34,7 +34,7 @@ function displayResults(results) {
                         <button class="btn btn-info" onclick="enterProduct('${product.id}')">
                             ENTRADA PRODUCTO
                         </button>
-                        <button class="btn btn-success" onclick="sellProduct('${product.id}')">
+                        <button class="btn btn-success" style="margin: 10px" onclick="sellProduct('${product.id}')">
                             SALIDA PRODUCTO
                         </button>
                       </p>

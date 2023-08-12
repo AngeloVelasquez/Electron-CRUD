@@ -20,12 +20,18 @@ async function deleteProduct(id) {
     return;
 }
 
-async function sellProductWindow() {
-    await ipcRenderer.invoke("sellProductWindow")
+async function sellProduct(id) {
+    const product = await ipcRenderer.invoke("editProduct", id)
+    await ipcRenderer.invoke("sellProductWindow", product)
+    
+    ipcRenderer.send("productData", product)
 }
 
-async function enterProductWindow() {
-    await ipcRenderer.invoke("enterProductWindow")
+async function enterProduct(id) {
+    const product = await ipcRenderer.invoke("editProduct", id)
+    await ipcRenderer.invoke("enterProductWindow", product)
+
+    ipcRenderer.send("productData2", product)
 }
 
 // Renderizar Productos
@@ -60,10 +66,10 @@ function renderProducts(products) {
                         <button class="btn btn-primary" onclick="deleteProduct('${product.id}')">
                             BORRAR
                         </button>
-                        <button class="btn btn-info" onclick="enterProductWindow()">
+                        <button class="btn btn-info" onclick="enterProduct('${product.id}')">
                             ENTRADA PRODUCTO
                         </button>
-                        <button class="btn btn-success" onclick="sellProductWindow()">
+                        <button class="btn btn-success" onclick="sellProduct('${product.id}')">
                             SALIDA PRODUCTO
                         </button>
                     </p>
@@ -89,5 +95,9 @@ const getAllProducts = async () => {
 async function init() {
     await getAllProducts()
 }
+
+ipcRenderer.on("refreshMainWindow", () => {
+    location.reload();
+});
 
 window.addEventListener('DOMContentLoaded', init)

@@ -24,11 +24,17 @@ function displayResults(results) {
                 <button class="btn btn-secondary" onclick="editProduct('${product.id}')">
                     EDITAR
                 </button>
+                <button class="btn btn-info" onclick="enterProduct('${product.id}')">
+                    ENTRADA PRODUCTO
+                </button>
+                <button class="btn btn-success" onclick="sellProduct('${product.id}')">
+                    SALIDA PRODUCTO
+                </button>
             </p>
         </div>
       `;
-      // Añadir el div a la lista de resultados
-      searchResults.appendChild(resultDiv);
+            // Añadir el div a la lista de resultados
+            searchResults.appendChild(resultDiv);
         });
     }
 }
@@ -36,19 +42,18 @@ function displayResults(results) {
 function performSearch(products, searchTerm) {
     const searchTermLower = searchTerm.toLowerCase();
 
-    const results = products.filter((product) => {
-        const productNameLower = product.name.toLowerCase();
-        const productGenderLower = product.gender.toLowerCase();
-        const productQuantityLower = product.quantity.toString().toLowerCase();
+    if (searchTerm.trim() === "") {
+        // Si el término de búsqueda está vacío, mostrar todos los productos
+        displayResults(products);
+    } else {
+        const results = products.filter((product) => {
+            const productNameLower = product.name.toLowerCase();
 
-        return (
-            productNameLower.includes(searchTermLower) ||
-            productGenderLower.includes(searchTermLower) ||
-            productQuantityLower.includes(searchTermLower)
-        );
-    });
+            return productNameLower.includes(searchTermLower);
+        });
 
-    displayResults(results);
+        displayResults(results);
+    }
 }
 
 module.exports = {

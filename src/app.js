@@ -1,13 +1,36 @@
-const { BrowserWindow, ipcMain, Notification, app } = require("electron")
+const { BrowserWindow, ipcMain, Notification, app, dialog } = require("electron")
+const fs = require("fs")
+const os = require("os")
 const { getConnection } = require("./database")
 const path = require("path")
+
+const currentDate = new Date();
+const year = currentDate.getFullYear();
+const month = (currentDate.getMonth() + 1).toString().padStart(2, "0");
+const day = currentDate.getDate().toString().padStart(2, "0");
+
+// Construir el nombre del archivo de registro
+const logFileName = `log_${year}-${month}-${day}.txt`;
+
+// Ruta completa del archivo de registro en la carpeta "registro inventario" en Documentos
+const logFilePath = path.join(app.getPath("documents"), "registro inventario", logFileName);
+
+// Función para agregar una entrada al archivo de registro
+function addToLog(entry) {
+    const currentTime = new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" });
+    const logEntry = `[${currentTime}] ${entry}\n`;
+
+    // Agregar la entrada al archivo de registro
+    fs.appendFileSync(logFilePath, logEntry);
+}
+
 
 async function createNewProduct(product) {
     try {
         const pool = await getConnection()
         const request = pool.request()
 
-        product.quantity = parseFloat(product.quantity)
+        product.quantity = parseFloat(product.quantity) || 0
 
         const sql = "INSERT INTO product (name, quantity, gender) OUTPUT INSERTED.* VALUES (@name, @quantity, @gender)"
         request.input("name", product.name)
@@ -18,9 +41,11 @@ async function createNewProduct(product) {
         const instertedProduct = result.recordset[0]
 
         new Notification({
-            title: "Electro SQL",
+            title: "Touch Inventario",
             body: `Nuevo producto ${product.name}`
         }).show()
+
+        addToLog(`Nuevo producto añadido: ${product.name}`)
 
         return instertedProduct
 
@@ -75,7 +100,76 @@ async function editProduct(id) {
         console.log(result)
         return result.recordset[0];
     } catch (error) {
-        console.error("Error al eliminar el producto:", error.message);
+        console.error("Error al obtener el producto:", error.message);
+        throw error;
+    }
+}
+
+async function sellProduct(id, soldQuantity) {
+    try {
+        const pool = await getConnection();
+        const request = pool.request();
+
+        const getProductQuery = "SELECT * FROM product WHERE id = @id";
+        request.input("id", id);
+
+        const productResult = await request.query(getProductQuery);
+        const product = productResult.recordset[0];
+
+        if (product.quantity >= soldQuantity) {
+            // Restar la cantidad vendida
+            const updatedQuantity = product.quantity - soldQuantity;
+            const updateQuery = "UPDATE product SET quantity = @updatedQuantity WHERE id = @id";
+            request.input("updatedQuantity", updatedQuantity);
+
+            await request.query(updateQuery);
+
+            // Obtener el producto actualizado
+            const updatedProductResult = await request.query(getProductQuery);
+
+            console.log("Producto vendido y actualizado:", updatedProductResult.recordset[0]);
+
+            addToLog(`Venta: Producto ${product.name} - Cantidad vendida: ${soldQuantity}gr`)
+
+            return updatedProductResult.recordset[0];
+        } else {
+            console.error("No hay suficiente cantidad para realizar la venta.");
+            return null;
+        }
+    } catch (error) {
+        console.error("Error al vender el producto:", error.message);
+        throw error;
+    }
+}
+
+async function enterProduct(id, enterQuantity) {
+    try {
+        const pool = await getConnection();
+        const request = pool.request();
+
+        const getProductQuery = "SELECT * FROM product WHERE id = @id";
+        request.input("id", id);
+
+        const productResult = await request.query(getProductQuery);
+        const product = productResult.recordset[0];
+
+        // Actualizar la cantidad sumando la cantidad ingresada
+        const updatedQuantity = product.quantity + enterQuantity;
+        const updateQuery = "UPDATE product SET quantity = @updatedQuantity WHERE id = @id";
+        request.input("updatedQuantity", updatedQuantity);
+
+        await request.query(updateQuery);
+
+        // Obtener el producto actualizado
+        const updatedProductResult = await request.query(getProductQuery);
+
+        console.log("Producto actualizado por entrada:", updatedProductResult.recordset[0]);
+
+        addToLog(`Entrada: Producto ${product.name} - Cantidad ingresada: ${enterQuantity}gr`);
+
+        return updatedProductResult.recordset[0];
+    } catch (error) {
+        console.error("Error al realizar la entrada del producto:", error.message);
         throw error;
     }
 }
@@ -104,7 +198,7 @@ async function updateProductById(newProduct, id) {
 }
 
 let window
-let sellProduct
+let modifyProduct
 
 function createWindow() {
     window = new BrowserWindow({
@@ -121,12 +215,15 @@ function createWindow() {
     window.on("closed", () => {
         app.quit()
     })
+    ipcMain.on("operationCompleted", () => {
+        window.webContents.send("refreshMainWindow");
+    });
 }
 
-function sellProductWindow() {
-    sellProduct = new BrowserWindow({
+function sellProductWindow(product) {
+    modifyProduct = new BrowserWindow({
         width: 600,
-        height: 480,
+        height: 340,
         autoHideMenuBar: true,
         title: "Cantidad a retirar",
         webPreferences: {
@@ -135,37 +232,41 @@ function sellProductWindow() {
             enableRemoteModule: true
         }
     });
-    sellProduct.loadFile("src/ui/sections/sellProduct.html")
-    sellProduct.on("closed", () => {
-        sellProduct = null;
+    modifyProduct.loadFile("src/ui/controllers/sell_product.html")
+    modifyProduct.on("closed", () => {
+        modifyProduct = null;
     });
+    modifyProduct.webContents.on("did-finish-load", () => {
+        modifyProduct.webContents.send("productData", product)
+    })
 }
 
-function enterProductWindow() {
-    sellProduct = new BrowserWindow({
+function enterProductWindow(product) {
+    modifyProduct = new BrowserWindow({
         width: 600,
-        height: 480,
+        height: 340,
         autoHideMenuBar: true,
-        title: "Cantidad a Ingresar",
+        title: "Cantidad a ingresar",
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
             enableRemoteModule: true
         }
     });
-    sellProduct.loadFile("src/ui/sections/enterProduct.html")
-    sellProduct.on("closed", () => {
-        sellProduct = null;
+    modifyProduct.loadFile("src/ui/controllers/enter_product.html")
+    modifyProduct.on("closed", () => {
+        modifyProduct = null;
     });
+    modifyProduct.webContents.on("did-finish-load", () => {
+        modifyProduct.webContents.send("productData2", product)
+    })
 }
 
 ipcMain.handle("callCreateNewProduct", async (event, newProduct) => {
     try {
         const insertedProduct = await createNewProduct(newProduct);
-        // Enviamos el producto insertado como respuesta al proceso de renderizado
         return insertedProduct;
     } catch (error) {
-        // Enviamos un mensaje de error como respuesta al proceso de renderizado
         throw new Error("Error al crear el producto: " + error.message);
     }
 });
@@ -181,6 +282,16 @@ ipcMain.handle("deleteProduct", async (e, id) => {
 
 ipcMain.handle("editProduct", async (e, id) => {
     const result = await editProduct(id)
+    return result
+})
+
+ipcMain.handle("sellProduct", async (e, id, soldQuantity) => {
+    const result = await sellProduct(id, soldQuantity)
+    return result
+})
+
+ipcMain.handle("enterProduct", async (e, id, enterQuantity) => {
+    const result = await enterProduct(id, enterQuantity)
     return result
 })
 
@@ -202,12 +313,12 @@ ipcMain.handle("getAllProductsOrderM", async (e) => {
     return await getAllProductsOrderM();
 })
 
-ipcMain.handle("sellProductWindow", async (e) => {
-    return await sellProductWindow()
+ipcMain.handle("sellProductWindow", async (e, product) => {
+    return await sellProductWindow(product)
 })
 
-ipcMain.handle("enterProductWindow", async (e) => {
-    return await enterProductWindow()
+ipcMain.handle("enterProductWindow", async (e, product) => {
+    return await enterProductWindow(product)
 })
 
 ipcMain.handle('perform-search', (event, searchTerm) => {
@@ -220,5 +331,6 @@ ipcMain.handle('perform-search', (event, searchTerm) => {
 
 module.exports = {
     createWindow,
-    sellProductWindow
+    sellProductWindow,
+    enterProductWindow
 }

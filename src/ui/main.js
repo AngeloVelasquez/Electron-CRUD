@@ -1,4 +1,4 @@
-const { ipcRenderer } = require("electron")
+const { ipcRenderer, ipcMain } = require("electron")
 const search = require("./search")
 
 // Elementos del formulario
@@ -20,7 +20,7 @@ formProduct.addEventListener("submit", async (e) => {
 
     const newProduct = {
         name: productName.value,
-        quantity: productQuantity.value,
+        quantity: parseFloat(productQuantity.value ?? 0),
         gender: productGender.value
     }
 
@@ -68,6 +68,20 @@ async function editProduct(id) {
     editProductId = product.id
 }
 
+async function sellProduct(id) {
+    const product = await ipcRenderer.invoke("editProduct", id)
+    await ipcRenderer.invoke("sellProductWindow", product)
+    
+    ipcRenderer.send("productData", product)
+}
+
+async function enterProduct(id) {
+    const product = await ipcRenderer.invoke("editProduct", id)
+    await ipcRenderer.invoke("enterProductWindow", product)
+
+    ipcRenderer.send("productData2", product)
+}
+
 function renderProducts(products) {
     productsList.innerHTML = "";
     products.forEach(product => {
@@ -85,6 +99,12 @@ function renderProducts(products) {
                     </button>
                     <button class="btn btn-secondary" onclick="editProduct('${product.id}')">
                         EDITAR
+                    </button>
+                    <button class="btn btn-info" onclick="enterProduct('${product.id}')">
+                        ENTRADA PRODUCTO
+                    </button>
+                    <button class="btn btn-success" onclick="sellProduct('${product.id}')">
+                        SALIDA PRODUCTO
                     </button>
                 </p>
             </div>
@@ -105,6 +125,10 @@ const getAllProducts = async () => {
 async function init() {
     await getAllProducts()
 }
+
+ipcRenderer.on("refreshMainWindow", () => {
+    location.reload();
+});
 
 // Inicializar el buscador
 searchInput.addEventListener("keyup", () => {

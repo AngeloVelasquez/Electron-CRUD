@@ -2,10 +2,11 @@ const { ipcRenderer } = require("electron")
 const search = require("./searchController")
 
 const productsList = document.getElementById("products")
+const productName = document.getElementById("name")
 
 // Reiniciar Buscador
 
-searchInput.addEventListener("input", () => {
+searchInput.addEventListener("keyup", () => {
     const searchTerm = searchInput.value;
     performSearch(products, searchTerm)
 });
@@ -20,32 +21,18 @@ async function deleteProduct(id) {
     return;
 }
 
-async function sellProductWindow() {
-    await ipcRenderer.invoke("sellProductWindow")
-}
-
-async function enterProductWindow() {
-    await ipcRenderer.invoke("enterProductWindow")
-}
-
 async function sellProduct(id) {
     const product = await ipcRenderer.invoke("editProduct", id)
-    productName.value = product.name
-    productQuantity.value = product.quantity
-    productGender.value = product.gender
-
-    editingStatus = true
-    editProductId = product.id
+    await ipcRenderer.invoke("sellProductWindow", product)
+    
+    ipcRenderer.send("productData", product)
 }
 
 async function enterProduct(id) {
     const product = await ipcRenderer.invoke("editProduct", id)
-    productName.value = product.name
-    productQuantity.value = product.quantity
-    productGender.value = product.gender
+    await ipcRenderer.invoke("enterProductWindow", product)
 
-    editingStatus = true
-    editProductId = product.id
+    ipcRenderer.send("productData2", product)
 }
 
 // Renderizar Productos
@@ -80,10 +67,10 @@ function renderProducts(products) {
                         <button class="btn btn-primary" onclick="deleteProduct('${product.id}')">
                             BORRAR
                         </button>
-                        <button class="btn btn-info" onclick="enterProductWindow()">
+                        <button class="btn btn-info" onclick="enterProduct('${product.id}')">
                             ENTRADA PRODUCTO
                         </button>
-                        <button class="btn btn-success" onclick="sellProductWindow()">
+                        <button class="btn btn-success" onclick="sellProduct('${product.id}')">
                             SALIDA PRODUCTO
                         </button>
                     </p>
@@ -109,5 +96,9 @@ const getAllProducts = async () => {
 async function init() {
     await getAllProducts()
 }
+
+ipcRenderer.on("refreshMainWindow", () => {
+    location.reload();
+});
 
 window.addEventListener('DOMContentLoaded', init)
